@@ -1,30 +1,54 @@
 package Main;
 
 public class Producteur implements Runnable {
+
     private final TamponPartage tamponPartage;
     private final int identifiant;
-    private final int articlesAProduire; // Nombre d'articles à produire
+    private final int articlesAProduire;
+    private int dejaFait = 0;
 
-    public Producteur(TamponPartage tamponPartage, int identifiant, int articlesAProduire) {
-        this.tamponPartage = tamponPartage;
-        this.identifiant = identifiant;
+    // ✅ Statistiques
+    private int totalProduit = 0;
+
+    public Producteur(TamponPartage tamponPartage, int identifiant,
+                      int articlesAProduire) {
+        this.tamponPartage     = tamponPartage;
+        this.identifiant       = identifiant;
         this.articlesAProduire = articlesAProduire;
+    }
+
+    public Producteur(TamponPartage tamponPartage, int identifiant,
+                      int articlesAProduire, int dejaFait) {
+        this(tamponPartage, identifiant, articlesAProduire);
+        this.dejaFait = dejaFait;
     }
 
     @Override
     public void run() {
         try {
-            for (int i = 0; i < articlesAProduire && estEnCours(); i++) { // Utilisation de estEnCours()
+            for (int i = dejaFait;
+                 i < articlesAProduire && InterfaceGraphique.enCours; i++) {
+
                 int article = identifiant * 100 + i;
-                tamponPartage.produire(article);
-                Thread.sleep((int) (Math.random() * 10000));
+                tamponPartage.produire(article, identifiant);
+                dejaFait = i + 1;
+                totalProduit++; // ✅
+
+                // ✅ Producteur rapide (0-500ms)
+                Thread.sleep((int)(Math.random() * 500));
+            }
+            // ✅ Signaler que ce producteur a terminé
+            if (dejaFait >= articlesAProduire) {
+                InterfaceGraphique.producteurTermine();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
 
-    private boolean estEnCours() {
-        return Main.enCours; // Utilise la méthode statique de Main pour vérifier si le programme est en cours d'exécution
-    }
+    // ✅ Getters
+    public int getDejaFait()          { return dejaFait; }
+    public int getIdentifiant()       { return identifiant; }
+    public int getArticlesAProduire() { return articlesAProduire; }
+    public int getTotalProduit()      { return totalProduit; }
 }
